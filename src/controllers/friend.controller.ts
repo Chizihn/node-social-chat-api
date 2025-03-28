@@ -67,8 +67,14 @@ export const getFriends = async (
         { recipient: userId, status: FriendshipStatus.ACCEPTED },
       ],
     })
-      .populate("requester", "user")
-      .populate("recipient", "user");
+      .populate(
+        "requester",
+        "username firstName lastName email profileImage location bio -password"
+      )
+      .populate(
+        "recipient",
+        "username email profileImage location bio -password"
+      );
 
     if (friendships.length === 0) {
       return res
@@ -161,11 +167,11 @@ export const searchFriendByQuery = async (
         { lastName: { $regex: searchTerm, $options: "i" } },
         { email: { $regex: searchTerm, $options: "i" } },
       ],
-    }).select("username email profileImage location bio");
+    }).select("username email profileImage location bio -password");
 
     if (!friends || friends.length === 0) {
       return res
-        .status(HTTPSTATUS.NOT_FOUND)
+        .status(HTTPSTATUS.OK)
         .json({ message: "No friends found matching the search term" });
     }
 

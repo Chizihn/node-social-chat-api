@@ -139,7 +139,7 @@ export const searchUserByQuery = async (
 
         { email: { $regex: searchTerm, $options: "i" } },
       ],
-    }).select("username email profileImage location bio");
+    }).select("username email profileImage location bio -password");
 
     if (!users || users.length === 0) {
       return res
