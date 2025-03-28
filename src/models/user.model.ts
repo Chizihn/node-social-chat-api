@@ -22,14 +22,16 @@ const UserSchema = new Schema<UserDocument>(
     toObject: {
       virtuals: true,
       transform: function (doc, ret) {
-        (ret.id = ret._id.toString()), delete ret._id, delete ret._v;
+        ret.id = ret._id.toString();
+        delete ret._id, delete ret._v;
         return ret;
       },
     },
     toJSON: {
       virtuals: true,
       transform: function (doc, ret) {
-        (ret.id = ret._id.toString()), delete ret._id, delete ret._v;
+        ret.id = ret._id.toString();
+        delete ret._id, delete ret._v;
         return ret;
       },
     },
@@ -46,7 +48,7 @@ UserSchema.pre("save", async function (next) {
 });
 
 UserSchema.methods.omitPassword = function (): Omit<UserDocument, "password"> {
-  const userObject = this.object();
+  const userObject = this.toObject();
   delete userObject.password;
   return userObject;
 };

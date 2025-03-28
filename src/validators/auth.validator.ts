@@ -8,8 +8,8 @@ export const signupScehma = z.object({
 });
 
 export const signinScehma = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string(),
+  email: z.string().email("Invalid email address").trim(),
+  password: z.string().min(6),
 });
 
 export const updateProfileSchema = z.object({

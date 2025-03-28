@@ -13,41 +13,34 @@ import {
 
 const friendRoutes = Router();
 
-// Accept a friend request
 friendRoutes.post(
   "/request/accept",
   authMiddleware,
   asyncAuthHandler(acceptFriendRequest)
 );
 
-// Reject a friend request
 friendRoutes.post(
   "/request/reject",
   authMiddleware,
   asyncAuthHandler(rejectFriendRequest)
 );
 
-// Get all friends for the current user
 friendRoutes.get("/friends", authMiddleware, asyncAuthHandler(getFriends));
 
-// Get a specific friend by ID
-friendRoutes.get("/friends/:id", authMiddleware, asyncAuthHandler(getFriend));
-
-// Search for friends by query (query parameter)
 friendRoutes.get(
   "/friends/search",
   authMiddleware,
   asyncAuthHandler(searchFriendByQuery)
 );
 
-// Send a friend request
+friendRoutes.get("/friends/:id", authMiddleware, asyncAuthHandler(getFriend));
+
 friendRoutes.post(
   "/friends/request",
   authMiddleware,
   asyncAuthHandler(sendFriendRequest)
 );
 
-// Get all pending friend requests for the current user
 friendRoutes.get(
   "/friend-requests",
   authMiddleware,

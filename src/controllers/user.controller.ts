@@ -1,10 +1,15 @@
 import { NextFunction, Request, Response } from "express";
 import UserModel from "../models/user.model";
 import { generateToken } from "../utils/token";
-import { signinScehma, signupScehma } from "../validators/auth.validator";
+import {
+  searchFriendQuerySchema,
+  signinScehma,
+  signupScehma,
+} from "../validators/auth.validator";
 import { compareValues } from "../utils/bcrypt";
 import { HTTPSTATUS } from "../config/http.config";
 import { UserDocument } from "../interfaces/user.interface";
+import { UserRequest } from "../types/custom.type";
 
 export const signup = async (
   req: Request,
@@ -43,8 +48,7 @@ export const signup = async (
 
     // Create a new user
     const newUser: UserDocument = new UserModel({
-      username: validatedData.username,
-      email: validatedData.email,
+      ...validatedData,
     });
 
     await newUser.save();
@@ -70,25 +74,17 @@ export const signin = async (
   try {
     const validatedData = signinScehma.parse(req.body);
 
-    // Make sure to select the password field explicitly
-    const user = await UserModel.findOne({ email: validatedData.email }).select(
-      "+password"
-    );
+    const user = await UserModel.findOne({ email: validatedData.email });
 
     if (!user) {
       res.status(HTTPSTATUS.NOT_FOUND).json({ message: "User does not exist" });
       return;
     }
 
-    // Check if user.password exists before comparing
-    if (!user.password) {
-      res
-        .status(HTTPSTATUS.UNAUTHORIZED)
-        .json({ message: "Account setup incomplete" });
-      return;
-    }
-
-    const isMatch = await compareValues(validatedData.password, user.password);
+    const isMatch = await compareValues(
+      validatedData.password,
+      user.password as string
+    );
 
     if (!isMatch) {
       res
@@ -121,6 +117,39 @@ export const logout = (
     });
   } catch (error) {
     console.error("Logout Error", error);
+    next(error);
+  }
+};
+
+export const searchUserByQuery = async (
+  req: UserRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const validatedQuery = searchFriendQuerySchema.parse(req.query);
+
+    const { query: searchTerm } = validatedQuery;
+
+    const users = await UserModel.find({
+      $or: [
+        { username: { $regex: searchTerm, $options: "i" } },
+        { firstName: { $regex: searchTerm, $options: "i" } },
+        { lastName: { $regex: searchTerm, $options: "i" } },
+
+        { email: { $regex: searchTerm, $options: "i" } },
+      ],
+    }).select("username email profileImage location bio");
+
+    if (!users || users.length === 0) {
+      return res
+        .status(HTTPSTATUS.NOT_FOUND)
+        .json({ message: "No users found matching the search term" });
+    }
+
+    return res.status(HTTPSTATUS.OK).json(users);
+  } catch (error) {
+    console.log("Error searching for user", error);
     next(error);
   }
 };

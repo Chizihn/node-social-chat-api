@@ -16,6 +16,4 @@ const settings: ISettings = {
   JWT_SECRET_EXPIRES: process.env.JWT_SECRET_EXPIRES as string,
 };
 
-console.log(settings);
-
 export default settings;

@@ -77,3 +77,48 @@ export const updateUserProfile = async (
     next(error);
   }
 };
+
+export const updateProfilePicture = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { profileImage } = req.body;
+
+    if (!profileImage) {
+      return res
+        .status(HTTPSTATUS.BAD_REQUEST)
+        .json({ message: "Profile image URL is required" });
+    }
+
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res
+        .status(HTTPSTATUS.UNAUTHORIZED)
+        .json({ message: "User not authenticated" });
+    }
+
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res
+        .status(HTTPSTATUS.NOT_FOUND)
+        .json({ message: "User not found" });
+    }
+
+    user.profileImage = profileImage;
+
+    await user.save();
+
+    res.status(HTTPSTATUS.OK).json({
+      message: "Profile picture updated successfully",
+      user: {
+        profileImage: user.profileImage,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating profile picture", error);
+    next(error);
+  }
+};
