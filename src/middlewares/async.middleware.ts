@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { AuthenticatedRequest, UserRequest } from "../types/custom.type";
+import { CustomRequest } from "../types/custom.type";
+import { ParamsDictionary } from "express-serve-static-core";
+import { ParsedQs } from "qs";
 
 type AsyncControllerType = (
   req: Request,
@@ -7,8 +9,12 @@ type AsyncControllerType = (
   next: NextFunction
 ) => Promise<any>;
 
-type AsyncAuthControllerType = (
-  req: UserRequest,
+type AsyncAuthControllerType<
+  P extends ParamsDictionary = ParamsDictionary,
+  ReqBody = any,
+  ReqQuery extends ParsedQs = ParsedQs
+> = (
+  req: CustomRequest<P, ReqBody, ReqQuery>,
   res: Response,
   next: NextFunction
 ) => Promise<any>;
@@ -24,10 +30,16 @@ export const asyncHandler =
   };
 
 export const asyncAuthHandler =
-  (controller: AsyncAuthControllerType): AsyncAuthControllerType =>
+  <
+    P extends ParamsDictionary = ParamsDictionary,
+    ReqBody = any,
+    ReqQuery extends ParsedQs = ParsedQs
+  >(
+    controller: AsyncAuthControllerType<P, ReqBody, ReqQuery>
+  ): AsyncAuthControllerType<P, ReqBody, ReqQuery> =>
   async (req, res, next) => {
     try {
-      await controller(req as UserRequest, res, next);
+      await controller(req, res, next);
     } catch (error) {
       next(error);
     }

@@ -78,21 +78,21 @@ export const updateUserProfile = async (
   }
 };
 
-export const updateProfilePicture = async (
+export const updateAvatar = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) => {
-  try {
-    const { profileImage } = req.body;
+  const userId = req.user?._id;
 
-    if (!profileImage) {
+  try {
+    const { avatar } = req.body;
+
+    if (!avatar) {
       return res
         .status(HTTPSTATUS.BAD_REQUEST)
-        .json({ message: "Profile image URL is required" });
+        .json({ message: "Avatar URL is required" });
     }
-
-    const userId = req.user?.id;
 
     if (!userId) {
       return res
@@ -107,18 +107,18 @@ export const updateProfilePicture = async (
         .json({ message: "User not found" });
     }
 
-    user.profileImage = profileImage;
+    user.avatar = avatar;
 
     await user.save();
 
     res.status(HTTPSTATUS.OK).json({
-      message: "Profile picture updated successfully",
+      message: "Avatar updated successfully",
       user: {
-        profileImage: user.profileImage,
+        avatar: user.avatar,
       },
     });
   } catch (error) {
-    console.error("Error updating profile picture", error);
+    console.error("Error updating avatar", error);
     next(error);
   }
 };

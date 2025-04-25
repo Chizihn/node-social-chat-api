@@ -11,8 +11,16 @@ export interface UserDocument extends Document {
   dateOfBirth?: string;
   location?: string;
   hobbies?: string[];
-  profileImage?: string;
+  interests?: string[];
+  avatar?: string;
+  coverImage?: string;
   bio?: string;
+  isPrivate?: boolean;
+  isVerified: boolean;
+  emailVerificationToken: string | null;
+  emailVerificationTokenExpires: Date | null;
+  passwordResetToken: string;
+  passwordResetTokenExpires: Date | null;
   comparePassword: (value: string) => Promise<boolean>;
   omitPassword(): Omit<UserDocument, "password">;
 }

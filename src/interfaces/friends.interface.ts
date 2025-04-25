@@ -5,6 +5,7 @@ export interface FriendDocument extends Document {
   requester: mongoose.Types.ObjectId;
   recipient: mongoose.Types.ObjectId;
   status: FriendshipStatusType;
+  mutualFriends?: number;
   createdAt: Date;
   updatedAt: Date;
 }

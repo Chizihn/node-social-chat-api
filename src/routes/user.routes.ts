@@ -1,20 +1,50 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { asyncAuthHandler } from "../middlewares/async.middleware";
-import {
-  getActiveUser,
-  getActiveUsers,
-} from "../controllers/friend.controller";
-import { searchUserByQuery } from "../controllers/user.controller";
+import userController from "../controllers/user.controller";
 
 const userRoutes = Router();
 
-userRoutes.get("/users", authMiddleware, asyncAuthHandler(getActiveUsers));
+// Get the currently authenticated user
+userRoutes.get(
+  "/me",
+  authMiddleware,
+  asyncAuthHandler(userController.getCurrentUser)
+);
+
+// Get all users
+userRoutes.get(
+  "/users",
+  authMiddleware,
+  asyncAuthHandler(userController.getUsers)
+);
+
+// Get all users excluding the current user
+userRoutes.get(
+  "/users/exclude=me",
+  authMiddleware,
+  asyncAuthHandler(userController.getUsersExcludingCurrent)
+);
+
+// Search users
 userRoutes.get(
   "/users/search",
   authMiddleware,
-  asyncAuthHandler(searchUserByQuery)
+  asyncAuthHandler(userController.searchUserByQuery)
 );
-userRoutes.get("/users/:id", authMiddleware, asyncAuthHandler(getActiveUser));
+
+// Get user by ID
+userRoutes.get(
+  "/users/id/:id",
+  authMiddleware,
+  asyncAuthHandler(userController.getUser)
+);
+
+// Get user by username
+userRoutes.get(
+  "/users/username/:username",
+  authMiddleware,
+  asyncAuthHandler(userController.getUserByUsername)
+);
 
 export default userRoutes;

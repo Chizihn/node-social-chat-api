@@ -1,15 +1,16 @@
 import { z } from "zod";
 import { GenderEnum } from "../enums/user.enum";
 
-export const signupScehma = z.object({
+export const signupSchema = z.object({
   username: z.string().min(1, "Username is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must have a minimum of 6 characters"),
 });
 
 export const signinScehma = z.object({
-  email: z.string().email("Invalid email address").trim(),
-  password: z.string().min(6),
+  email: z.string().email("Invalid email address").trim().optional(),
+  username: z.string().optional(),
+  password: z.string(),
 });
 
 export const updateProfileSchema = z.object({

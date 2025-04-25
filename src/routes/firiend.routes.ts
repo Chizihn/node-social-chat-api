@@ -1,50 +1,62 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { asyncAuthHandler } from "../middlewares/async.middleware";
-import {
-  acceptFriendRequest,
-  friendRequests,
-  getFriend,
-  getFriends,
-  rejectFriendRequest,
-  searchFriendByQuery,
-  sendFriendRequest,
-} from "../controllers/friend.controller";
+import friendController from "../controllers/friend.controller";
 
 const friendRoutes = Router();
 
 friendRoutes.post(
   "/request/accept",
   authMiddleware,
-  asyncAuthHandler(acceptFriendRequest)
+  asyncAuthHandler(friendController.acceptFriendRequest)
 );
 
 friendRoutes.post(
   "/request/reject",
   authMiddleware,
-  asyncAuthHandler(rejectFriendRequest)
+  asyncAuthHandler(friendController.rejectFriendRequest)
 );
 
-friendRoutes.get("/friends", authMiddleware, asyncAuthHandler(getFriends));
+friendRoutes.get(
+  "/friends",
+  authMiddleware,
+  asyncAuthHandler(friendController.getFriends)
+);
 
 friendRoutes.get(
   "/friends/search",
   authMiddleware,
-  asyncAuthHandler(searchFriendByQuery)
+  asyncAuthHandler(friendController.searchFriendByQuery)
 );
 
-friendRoutes.get("/friends/:id", authMiddleware, asyncAuthHandler(getFriend));
+friendRoutes.get(
+  "/friends/:id",
+  authMiddleware,
+  asyncAuthHandler(friendController.getFriend)
+);
+
+// Sent friend requests
+friendRoutes.get(
+  "/requests",
+  authMiddleware,
+  asyncAuthHandler(friendController.sentRequests)
+);
 
 friendRoutes.post(
-  "/friends/request",
+  "/request",
   authMiddleware,
-  asyncAuthHandler(sendFriendRequest)
+  asyncAuthHandler(friendController.sendFriendRequest)
 );
 
 friendRoutes.get(
   "/friend-requests",
   authMiddleware,
-  asyncAuthHandler(friendRequests)
+  asyncAuthHandler(friendController.friendRequests)
 );
 
+friendRoutes.get(
+  "/find",
+  authMiddleware,
+  asyncAuthHandler(friendController.findPotentialFriends)
+);
 export default friendRoutes;

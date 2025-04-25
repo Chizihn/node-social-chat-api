@@ -2,40 +2,41 @@ import { ErrorRequestHandler } from "express";
 import { HTTPSTATUS } from "../config/http.config";
 import { ZodError, ZodIssueBase } from "zod";
 import { ErrorCodeEnum } from "../enums/error.enum";
+import { AppError, ZodValidationException } from "../utils/appError";
 
-export const errorHandler: ErrorRequestHandler = async (
+export const errorHandler: ErrorRequestHandler = (
   error,
   req,
   res,
   next
-): Promise<any> => {
-  console.log(`Error occurred on ${req.path}`);
-  console.error(error);
+): any => {
+  console.log(`Error occurred on PATH ${req.path}`);
 
-  if (res.headersSent) {
-    return next(error);
-  }
+  console.log("the error", error);
 
-  res.setHeader("Content-Type", "application/json");
-
-  if (error instanceof ZodError) {
-    // Extract the first error from ZodError
-    const firstError = error.errors[0];
-    const fieldName = firstError?.path?.join(".") || "field";
-    const errorMessage = firstError?.message || "Validation error";
-
-    return res.status(HTTPSTATUS.UNPROCESSABLE_ENTITY).json({
-      message: errorMessage,
-      field: fieldName,
-      errors: error.errors,
-      errorCode: ErrorCodeEnum.VALIDATION_ERROR,
+  // Handle JSON parse errors
+  if (error instanceof SyntaxError) {
+    return res.status(HTTPSTATUS.BAD_REQUEST).json({
+      message: "Invalid JSON data passed.",
+      error: (error as Error).message || "Invalid JSON data.",
     });
   }
 
-  if (error instanceof SyntaxError) {
-    return res.status(HTTPSTATUS.BAD_REQUEST).json({
-      message: "Invalid JSON data passed",
-      error: (error as Error).message || "Invalid JSON data",
+  // Handle Zod validation errors specifically
+  if (error instanceof ZodValidationException) {
+    return res.status(error.statusCode).json({
+      message: error.message,
+      errorCode: error.errorCode,
+      details: error.details?.errors || error.details?.format(), // Format Zod errors nicely
+    });
+  }
+
+  // Handle all custom AppErrors (this catches all your custom error classes)
+
+  if (error instanceof AppError) {
+    return res.status(error.statusCode).json({
+      message: error.message,
+      errorCode: error.errorCode,
     });
   }
 

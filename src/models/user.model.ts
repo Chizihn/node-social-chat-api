@@ -14,8 +14,34 @@ const UserSchema = new Schema<UserDocument>(
     dateOfBirth: { type: String },
     location: { type: String },
     hobbies: { type: [String] },
-    profileImage: { type: String },
+    interests: { type: [String] },
+    avatar: { type: String },
+    coverImage: { type: String },
     bio: { type: String },
+    isPrivate: {
+      type: Boolean,
+      default: false,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerificationToken: {
+      type: String,
+      default: null,
+    },
+    emailVerificationTokenExpires: {
+      type: Date,
+      default: null,
+    },
+    passwordResetToken: {
+      type: String,
+      default: null,
+    },
+    passwordResetTokenExpires: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

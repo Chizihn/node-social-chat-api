@@ -1,15 +1,17 @@
-import { Request, Response } from "express";
+import { Request } from "express";
+import { ParamsDictionary } from "express-serve-static-core";
+import { ParsedQs } from "qs";
 
 export interface AuthenticatedRequest extends Request {
   user?: any;
 }
 
-export interface AnyResponse extends Response {
-  response?: any;
-}
-
-export interface UserRequest extends AuthenticatedRequest {
-  query: {
-    searchTerm: string;
-  };
+export interface CustomRequest<
+  Params extends ParamsDictionary = ParamsDictionary,
+  ReqBody = any,
+  ReqQuery extends ParsedQs = ParsedQs
+> extends AuthenticatedRequest {
+  params: Params;
+  body: ReqBody;
+  query: ReqQuery;
 }

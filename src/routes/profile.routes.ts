@@ -3,7 +3,7 @@ import { authMiddleware } from "../middlewares/auth.middleware";
 import { asyncAuthHandler } from "../middlewares/async.middleware";
 import {
   getCurrentUserProfile,
-  updateProfilePicture,
+  updateAvatar,
   updateUserProfile,
 } from "../controllers/profile.controller";
 
@@ -21,9 +21,9 @@ profileRoutes.put(
 );
 
 profileRoutes.put(
-  "/profile/update-profile-pic",
+  "/profile/update-avatar",
   authMiddleware,
-  asyncAuthHandler(updateProfilePicture)
+  asyncAuthHandler(updateAvatar)
 );
 
 export default profileRoutes;

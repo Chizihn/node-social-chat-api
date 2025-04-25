@@ -25,19 +25,26 @@ const friendSchema: Schema = new Schema<FriendDocument>(
     toObject: {
       virtuals: true,
       transform: function (doc, ret) {
-        (ret.id = ret._id.toString()), delete ret._id, delete ret._v;
+        ret.id = ret._id.toString();
+        delete ret._id;
+        delete ret._v;
         return ret;
       },
     },
     toJSON: {
       virtuals: true,
       transform: function (doc, ret) {
-        (ret.id = ret._id.toString()), delete ret._id, delete ret._v;
+        ret.id = ret._id.toString();
+        delete ret._id;
+        delete ret._v;
         return ret;
       },
     },
   }
 );
+
+// Ensure users can't have duplicate friendship connections
+friendSchema.index({ requester: 1, recipient: 1 }, { unique: true });
 
 const FriendModel = mongoose.model<FriendDocument>("Friend", friendSchema);
 
