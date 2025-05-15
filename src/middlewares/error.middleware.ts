@@ -1,6 +1,5 @@
 import { ErrorRequestHandler } from "express";
 import { HTTPSTATUS } from "../config/http.config";
-import { ZodError, ZodIssueBase } from "zod";
 import { ErrorCodeEnum } from "../enums/error.enum";
 import { AppError, ZodValidationException } from "../utils/appError";
 

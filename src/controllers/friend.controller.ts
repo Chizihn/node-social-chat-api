@@ -24,9 +24,12 @@ class FriendController {
       })
         .populate(
           "requester",
-          "username firstName lastName email avatar location bio -password"
+          "id username firstName lastName email avatar location bio -password"
         )
-        .populate("recipient", "username email avatar location bio -password");
+        .populate(
+          "recipient",
+          "id username firstName lastName email avatar location bio -password"
+        );
 
       // if (!friendships.length) {
       //   return res
@@ -276,7 +279,9 @@ class FriendController {
       const friendRequests = await FriendModel.find({
         recipient: userId,
         status: FriendshipStatus.PENDING,
-      });
+      })
+        .populate("requester", "id username firstName lastName avatar")
+        .populate("recipient", "id username firstName lastName avatar");
 
       return res.status(HTTPSTATUS.OK).json({
         message: "Friend requests retrieved successfully.",

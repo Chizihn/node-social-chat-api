@@ -11,6 +11,7 @@ export const FriendshipStatus = {
   PENDING: "PENDING",
   REJECTED: "REJECTED",
   BLOCKED: "BLOCKED",
+  REMOVED: "REMOVED",
 } as const;
 
 export type FriendshipStatusType = keyof typeof FriendshipStatus;

@@ -1,4 +1,7 @@
 import FollowModel from "../models/follow.model";
+import { NotificationType } from "../models/notification.model";
+import UserModel from "../models/user.model";
+import { NotificationService } from "./notification.service";
 
 class FollowService {
   async followUser(followerId: string, followingId: string) {
@@ -14,6 +17,21 @@ class FollowService {
     if (existingFollow) {
       throw new Error("You are already following this user");
     }
+
+    const user = await UserModel.findById(followerId);
+
+    const notificationContent = `${
+      user?.firstName || user?.username
+    } started following you`;
+
+    await NotificationService.createNotification(
+      followingId,
+      followerId,
+      NotificationType.NEW_FOLLOWER,
+      notificationContent,
+      followerId,
+      "User"
+    );
 
     return await FollowModel.create({
       follower: followerId,
@@ -47,8 +65,6 @@ class FollowService {
       "id -password"
     );
   }
-
-
 }
 
 export default new FollowService();

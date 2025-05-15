@@ -83,8 +83,6 @@ class FollowController {
       next(error);
     }
   }
-
-
 }
 
 export default new FollowController();

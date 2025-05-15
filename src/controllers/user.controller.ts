@@ -4,6 +4,7 @@ import { searchFriendQuerySchema } from "../validators/auth.validator";
 import { HTTPSTATUS } from "../config/http.config";
 import { AuthenticatedRequest, CustomRequest } from "../types/custom.type";
 import followService from "../services/follow.service";
+import { UserService } from "../services/user.service";
 
 class UserController {
   async getCurrentUser(
@@ -29,10 +30,12 @@ class UserController {
       }
 
       const followers = await followService.getFollowers(user.id);
-      const followersIds = followers.map((f) => f.follower._id.toString()); // note: f.follower not f.following
+      const followersIds = followers.map((f: any) => f.follower._id.toString()); // note: f.follower not f.following
 
       const following = await followService.getFollowing(user.id);
-      const followingIds = following.map((f) => f.following._id.toString());
+      const followingIds = following.map((f: any) =>
+        f.following._id.toString()
+      );
 
       const userObj = user.toObject();
 
@@ -104,10 +107,12 @@ class UserController {
       }
 
       const followers = await followService.getFollowers(user.id);
-      const followersIds = followers.map((f) => f.follower._id.toString()); // note: f.follower not f.following
+      const followersIds = followers.map((f: any) => f.follower._id.toString()); // note: f.follower not f.following
 
       const following = await followService.getFollowing(user.id);
-      const followingIds = following.map((f) => f.following._id.toString());
+      const followingIds = following.map((f: any) =>
+        f.following._id.toString()
+      );
 
       const userObj = {
         ...user.toObject(),
@@ -142,10 +147,12 @@ class UserController {
       }
 
       const followers = await followService.getFollowers(user.id);
-      const followersIds = followers.map((f) => f.follower._id.toString()); // note: f.follower not f.following
+      const followersIds = followers.map((f: any) => f.follower._id.toString()); // note: f.follower not f.following
 
       const following = await followService.getFollowing(user.id);
-      const followingIds = following.map((f) => f.following._id.toString());
+      const followingIds = following.map((f: any) =>
+        f.following._id.toString()
+      );
 
       const userObj = {
         ...user.toObject(),
@@ -189,6 +196,19 @@ class UserController {
     } catch (error) {
       console.error("Error searching for user:", error);
       next(error);
+    }
+  }
+
+  async blockUser(req: AuthenticatedRequest, res: Response) {
+    try {
+      const userId = req.user?._id; // assuming you're using auth middleware
+      const { targetId } = req.params;
+
+      const result = await UserService.blockUser(userId, targetId);
+      return res.status(200).json(result);
+    } catch (error: any) {
+      console.error("Error blocking user:", error);
+      return res.status(500).json({ error: error.message || "Server error" });
     }
   }
 }

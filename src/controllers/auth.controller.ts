@@ -5,10 +5,18 @@ import {
   generateToken,
   tokenExpires,
 } from "../utils/token";
-import { signupSchema, signinScehma } from "../validators/auth.validator";
+import {
+  signupSchema,
+  signinScehma,
+  forgotPasswordSchema,
+  confirmResetSchema,
+  resetPasswordSchema,
+} from "../validators/auth.validator";
 import { HTTPSTATUS } from "../config/http.config";
 import { UserDocument } from "../interfaces/user.interface";
 import { sendEmail } from "../utils/email";
+import { generateOtpCode } from "../utils/otp";
+import { hashValue } from "../utils/bcrypt";
 
 class AuthController {
   public async signup(
@@ -100,10 +108,13 @@ class AuthController {
 
       const token = generateToken(user._id as string, res);
 
+      // Use the omitPassword method to remove the password from the response
+      const userWithoutPassword = user.omitPassword();
+
       res.status(HTTPSTATUS.OK).json({
         message: "User signed in successfully",
         token,
-        user,
+        user: userWithoutPassword,
       });
     } catch (error) {
       console.error("Signin error:", error);
@@ -241,6 +252,88 @@ class AuthController {
       });
     } catch (error) {
       console.error("Resend verification email error:", error);
+      next(error);
+    }
+  }
+
+  async forgotPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email } = forgotPasswordSchema.parse(req.body);
+
+      const user = await UserModel.findOne({ email });
+      if (!user) {
+        return res
+          .status(HTTPSTATUS.NOT_FOUND)
+          .json({ message: "User not found" });
+      }
+
+      const { code, expires } = generateOtpCode();
+
+      user.passwordResetToken = code;
+      user.passwordResetTokenExpires = expires;
+      await user.save();
+
+      await sendEmail({
+        to: email,
+        subject: "Reset your password",
+        text: `Your OTP code is: ${code}`,
+      });
+
+      return res.status(HTTPSTATUS.OK).json({ message: "OTP sent to email" });
+    } catch (error) {
+      console.error("Error in forgotPassword:", error);
+      next(error);
+    }
+  }
+
+  async confirmResetCode(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, code } = confirmResetSchema.parse(req.body);
+
+      const user = await UserModel.findOne({ email });
+
+      if (
+        !user ||
+        user.passwordResetToken !== code ||
+        !user.passwordResetTokenExpires ||
+        user.passwordResetTokenExpires < new Date()
+      ) {
+        return res
+          .status(HTTPSTATUS.BAD_REQUEST)
+          .json({ message: "Invalid or expired code" });
+      }
+
+      res.status(HTTPSTATUS.OK).json({ message: "Code confirmed" });
+    } catch (error) {
+      console.error("Error confirming code:", error);
+      next(error);
+    }
+  }
+
+  async resetPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, code, newPassword } = resetPasswordSchema.parse(req.body);
+      const user = await UserModel.findOne({ email });
+
+      if (
+        !user ||
+        user.passwordResetToken !== code ||
+        !user.passwordResetTokenExpires ||
+        user.passwordResetTokenExpires < new Date()
+      ) {
+        return res
+          .status(HTTPSTATUS.BAD_REQUEST)
+          .json({ message: "Invalid or expired code" });
+      }
+
+      user.password = await hashValue(newPassword);
+      user.passwordResetToken = null;
+      user.passwordResetTokenExpires = null;
+      await user.save();
+
+      res.status(HTTPSTATUS.OK).json({ message: "Password reset successful" });
+    } catch (error) {
+      console.error("Error resetting password:", error);
       next(error);
     }
   }

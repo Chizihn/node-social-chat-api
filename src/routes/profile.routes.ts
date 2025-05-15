@@ -1,29 +1,46 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { asyncAuthHandler } from "../middlewares/async.middleware";
-import {
-  getCurrentUserProfile,
-  updateAvatar,
-  updateUserProfile,
-} from "../controllers/profile.controller";
+import { ProfileController } from "../controllers/profile.controller";
+import upload from "../utils/multer";
 
 const profileRoutes = Router();
 
+// Get user profile
 profileRoutes.get(
   "/profile",
   authMiddleware,
-  asyncAuthHandler(getCurrentUserProfile)
+  asyncAuthHandler(ProfileController.getProfile)
 );
+
+// Update profile information
 profileRoutes.put(
   "/profile/update",
   authMiddleware,
-  asyncAuthHandler(updateUserProfile)
+  asyncAuthHandler(ProfileController.updateProfile)
 );
 
+// Update profile avatar
 profileRoutes.put(
   "/profile/update-avatar",
   authMiddleware,
-  asyncAuthHandler(updateAvatar)
+  upload.single("avatar"),
+  asyncAuthHandler(ProfileController.updateAvatar)
+);
+
+// Toggle profile privacy
+profileRoutes.put(
+  "/profile/privacy",
+  authMiddleware,
+  asyncAuthHandler(ProfileController.togglePrivacy)
+);
+
+// Update profile cover image
+profileRoutes.put(
+  "/profile/update-cover-image",
+  authMiddleware,
+  upload.single("coverImage"),
+  asyncAuthHandler(ProfileController.updateCoverImage)
 );
 
 export default profileRoutes;

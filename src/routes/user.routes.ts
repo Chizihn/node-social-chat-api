@@ -33,6 +33,12 @@ userRoutes.get(
   asyncAuthHandler(userController.searchUserByQuery)
 );
 
+userRoutes.get(
+  "/users/:targetId/block",
+  authMiddleware,
+  asyncAuthHandler(userController.blockUser)
+);
+
 // Get user by ID
 userRoutes.get(
   "/users/id/:id",

@@ -13,6 +13,23 @@ export const signinScehma = z.object({
   password: z.string(),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address").trim(),
+});
+
+export const confirmResetSchema = z.object({
+  email: z.string().email("Invalid email address").trim(),
+  code: z.string().max(6, "Otp code must be 6"),
+});
+
+export const resetPasswordSchema = z.object({
+  code: z.string().max(6, "Otp code must be 6"),
+  email: z.string().email("Invalid email address").trim(),
+  newPassword: z
+    .string()
+    .min(6, "Password must have a minimum of 6 characters"),
+});
+
 export const updateProfileSchema = z.object({
   firstName: z
     .string()

@@ -1,124 +1,212 @@
 import { NextFunction, Response } from "express";
 import { AuthenticatedRequest } from "../types/custom.type";
 import { HTTPSTATUS } from "../config/http.config";
-import UserModel from "../models/user.model";
 import { updateProfileSchema } from "../validators/auth.validator";
+import { ProfileService } from "../services/profile.service";
+import { z } from "zod";
+import { IProfileUpdate } from "../types/profile.type";
 
-export const getCurrentUserProfile = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const userId = req.user?.id; // assuming user ID is set in the request from the authentication middleware
-    if (!userId) {
-      return res
-        .status(HTTPSTATUS.UNAUTHORIZED)
-        .json({ message: "User not authenticated" });
+export class ProfileController {
+  static async getProfile(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res
+          .status(HTTPSTATUS.UNAUTHORIZED)
+          .json({ message: "User not authenticated" });
+      }
+
+      const profile = await ProfileService.getProfile(userId);
+      if (!profile) {
+        return res
+          .status(HTTPSTATUS.NOT_FOUND)
+          .json({ message: "Profile not found" });
+      }
+
+      res.status(HTTPSTATUS.OK).json({
+        message: "Profile retrieved successfully",
+        data: profile,
+      });
+    } catch (error) {
+      console.error("Get Profile Error:", error);
+      next(error);
     }
-
-    const user = await UserModel.findById(userId).select("-password"); // Exclude password from profile
-    if (!user) {
-      return res
-        .status(HTTPSTATUS.NOT_FOUND)
-        .json({ message: "User not found" });
-    }
-
-    res.status(HTTPSTATUS.OK).json({
-      message: "User profile retrieved successfully",
-      user,
-    });
-  } catch (error) {
-    console.log("Get User Profile Error", error);
-    next(error);
   }
-};
 
-export const updateUserProfile = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const validatedData = updateProfileSchema.parse(req.body);
+  static async updateProfile(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const validatedData = updateProfileSchema.parse(
+        req.body
+      ) as IProfileUpdate;
+      const userId = req.user?.id;
 
-    const userId = req.user?.id;
+      if (!userId) {
+        return res
+          .status(HTTPSTATUS.UNAUTHORIZED)
+          .json({ message: "User not authenticated" });
+      }
 
-    if (!userId) {
-      return res
-        .status(HTTPSTATUS.UNAUTHORIZED)
-        .json({ message: "User not authenticated" });
+      const updatedProfile = await ProfileService.updateProfile(
+        userId,
+        validatedData
+      );
+      if (!updatedProfile) {
+        return res
+          .status(HTTPSTATUS.NOT_FOUND)
+          .json({ message: "Profile not found" });
+      }
+
+      res.status(HTTPSTATUS.OK).json({
+        message: "Profile updated successfully",
+        data: updatedProfile,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(HTTPSTATUS.BAD_REQUEST).json({
+          message: "Invalid input data",
+          errors: error.errors,
+        });
+      }
+      console.error("Update Profile Error:", error);
+      next(error);
     }
-
-    const user = await UserModel.findById(userId);
-    if (!user) {
-      return res
-        .status(HTTPSTATUS.NOT_FOUND)
-        .json({ message: "User not found" });
-    }
-
-    Object.assign(user, validatedData);
-
-    await user.save();
-
-    res.status(HTTPSTATUS.OK).json({
-      message: "User profile updated successfully",
-      user: {
-        firstName: user.firstName,
-        lastName: user.lastName,
-        gender: user.gender,
-        dateOfBirth: user.dateOfBirth,
-        location: user.location,
-        hobbies: user.hobbies,
-      },
-    });
-  } catch (error) {
-    console.error("Update User Profile Error", error);
-    next(error);
   }
-};
 
-export const updateAvatar = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  const userId = req.user?._id;
+  static async updateAvatar(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const userId = req.user?.id;
+      let avatarUrl = req.body.avatarUrl;
 
-  try {
-    const { avatar } = req.body;
+      if (req.file) {
+        const { CloudinaryService } = require("../utils/cloudinary");
+        const result = await CloudinaryService.uploadFile(
+          req.file.path,
+          "avatars"
+        );
+        avatarUrl = result.secure_url;
+      }
 
-    if (!avatar) {
-      return res
-        .status(HTTPSTATUS.BAD_REQUEST)
-        .json({ message: "Avatar URL is required" });
+      if (!avatarUrl) {
+        return res
+          .status(HTTPSTATUS.BAD_REQUEST)
+          .json({ message: "Avatar URL is required" });
+      }
+
+      if (!userId) {
+        return res
+          .status(HTTPSTATUS.UNAUTHORIZED)
+          .json({ message: "User not authenticated" });
+      }
+
+      const updatedProfile = await ProfileService.updateAvatar(
+        userId,
+        avatarUrl
+      );
+      if (!updatedProfile) {
+        return res
+          .status(HTTPSTATUS.NOT_FOUND)
+          .json({ message: "Profile not found" });
+      }
+
+      res.status(HTTPSTATUS.OK).json({
+        message: "Avatar updated successfully",
+        data: updatedProfile,
+      });
+    } catch (error) {
+      console.error("Update Avatar Error:", error);
+      next(error);
     }
-
-    if (!userId) {
-      return res
-        .status(HTTPSTATUS.UNAUTHORIZED)
-        .json({ message: "User not authenticated" });
-    }
-
-    const user = await UserModel.findById(userId);
-    if (!user) {
-      return res
-        .status(HTTPSTATUS.NOT_FOUND)
-        .json({ message: "User not found" });
-    }
-
-    user.avatar = avatar;
-
-    await user.save();
-
-    res.status(HTTPSTATUS.OK).json({
-      message: "Avatar updated successfully",
-      user: {
-        avatar: user.avatar,
-      },
-    });
-  } catch (error) {
-    console.error("Error updating avatar", error);
-    next(error);
   }
-};
+
+  static async togglePrivacy(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res
+          .status(HTTPSTATUS.UNAUTHORIZED)
+          .json({ message: "User not authenticated" });
+      }
+
+      const updatedProfile = await ProfileService.toggleProfilePrivacy(userId);
+      if (!updatedProfile) {
+        return res
+          .status(HTTPSTATUS.NOT_FOUND)
+          .json({ message: "Profile not found" });
+      }
+
+      res.status(HTTPSTATUS.OK).json({
+        message: "Profile privacy updated successfully",
+        data: updatedProfile,
+      });
+    } catch (error) {
+      console.error("Toggle Privacy Error:", error);
+      next(error);
+    }
+  }
+
+  static async updateCoverImage(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const userId = req.user?.id;
+      let coverImageUrl = req.body.coverImageUrl;
+
+      if (req.file) {
+        const { CloudinaryService } = require("../utils/cloudinary");
+        const result = await CloudinaryService.uploadFile(
+          req.file.path,
+          "covers"
+        );
+        coverImageUrl = result.secure_url;
+      }
+
+      if (!coverImageUrl) {
+        return res
+          .status(HTTPSTATUS.BAD_REQUEST)
+          .json({ message: "Cover image URL is required" });
+      }
+
+      if (!userId) {
+        return res
+          .status(HTTPSTATUS.UNAUTHORIZED)
+          .json({ message: "User not authenticated" });
+      }
+
+      const updatedProfile = await ProfileService.updateCoverImage(
+        userId,
+        coverImageUrl
+      );
+      if (!updatedProfile) {
+        return res
+          .status(HTTPSTATUS.NOT_FOUND)
+          .json({ message: "Profile not found" });
+      }
+
+      res.status(HTTPSTATUS.OK).json({
+        message: "Cover image updated successfully",
+        data: updatedProfile,
+      });
+    } catch (error) {
+      console.error("Update Cover Image Error:", error);
+      next(error);
+    }
+  }
+}

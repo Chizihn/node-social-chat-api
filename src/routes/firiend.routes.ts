@@ -23,6 +23,12 @@ friendRoutes.get(
   asyncAuthHandler(friendController.getFriends)
 );
 
+friendRoutes.post(
+  "/friends/remove",
+  authMiddleware,
+  asyncAuthHandler(friendController.removeFriend)
+);
+
 friendRoutes.get(
   "/friends/search",
   authMiddleware,

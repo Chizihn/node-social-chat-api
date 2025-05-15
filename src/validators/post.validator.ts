@@ -101,4 +101,14 @@ export class PostValidation {
   static validateLikeAction(data: unknown) {
     return PostValidation.LikeActionSchema.safeParse(data);
   }
+
+  // Utility method to validate trending posts query
+  static validateTrendingPosts(data: unknown) {
+    return PostValidation.TrendingPostsSchema.safeParse(data);
+  }
+
+  // Utility method to validate feed query
+  static validateFeed(data: unknown) {
+    return PostValidation.FeedSchema.safeParse(data);
+  }
 }

@@ -19,7 +19,7 @@ export interface UserDocument extends Document {
   isVerified: boolean;
   emailVerificationToken: string | null;
   emailVerificationTokenExpires: Date | null;
-  passwordResetToken: string;
+  passwordResetToken: string | null;
   passwordResetTokenExpires: Date | null;
   comparePassword: (value: string) => Promise<boolean>;
   omitPassword(): Omit<UserDocument, "password">;
