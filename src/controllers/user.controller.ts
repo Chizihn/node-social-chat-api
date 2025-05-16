@@ -5,6 +5,8 @@ import { HTTPSTATUS } from "../config/http.config";
 import { AuthenticatedRequest, CustomRequest } from "../types/custom.type";
 import followService from "../services/follow.service";
 import { UserService } from "../services/user.service";
+import logger from "../utils/logger";
+import BlockModel from "../models/block.model";
 
 class UserController {
   async getCurrentUser(
@@ -185,12 +187,12 @@ class UserController {
         ],
       }).select("id username firstName lastName avatar location bio -password");
 
-      if (!users.length) {
-        res
-          .status(HTTPSTATUS.NOT_FOUND)
-          .json({ message: "No users found matching the search term" });
-        return;
-      }
+      // if (!users.length) {
+      //   res
+      //     .status(HTTPSTATUS.NOT_FOUND)
+      //     .json({ message: "No users found matching the search term" });
+      //   return;
+      // }
 
       res.status(HTTPSTATUS.OK).json(users);
     } catch (error) {
@@ -199,7 +201,11 @@ class UserController {
     }
   }
 
-  async blockUser(req: AuthenticatedRequest, res: Response) {
+  async blockUser(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) {
     try {
       const userId = req.user?._id; // assuming you're using auth middleware
       const { targetId } = req.params;
@@ -207,8 +213,51 @@ class UserController {
       const result = await UserService.blockUser(userId, targetId);
       return res.status(200).json(result);
     } catch (error: any) {
-      console.error("Error blocking user:", error);
-      return res.status(500).json({ error: error.message || "Server error" });
+      logger.error("Error blocking user:", error);
+      next(error);
+    }
+  }
+
+  static async unblockUser(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const userId = req.user?._id; // assuming you're using auth middleware
+      const { targetId } = req.params;
+
+      if (!userId) {
+        return res.status(400).json({ error: "User not authenticated" });
+      }
+
+      if (userId === targetId) {
+        return res.status(400).json({ error: "You cannot unblock yourself" });
+      }
+
+      const result = await UserService.unblockUser(userId, targetId);
+      return res.status(200).json(result);
+    } catch (error) {
+      logger.error("Error unblocking user:", error);
+      next(error);
+    }
+  }
+  // Example: Get blocked users for a specific user
+  static async blockedUsers(req: Request, res: Response, next: NextFunction) {
+    const { userId } = req.params;
+    const { page = 1, limit = 10 } = req.query; // Pagination params
+
+    try {
+      const result = await UserService.getBlockedUsers(
+        userId,
+        Number(page),
+        Number(limit)
+      );
+
+      return res.status(200).json(result);
+    } catch (error) {
+      // Forward error to the error handler middleware
+      next(error);
     }
   }
 }

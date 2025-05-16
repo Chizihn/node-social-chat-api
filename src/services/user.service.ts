@@ -48,14 +48,6 @@ export class UserService {
       throw new Error("You cannot block yourself.");
     }
 
-    // 1. Remove from friends if they are friends
-    await UserModel.findByIdAndUpdate(userId, {
-      $pull: { friends: targetId },
-    });
-    await UserModel.findByIdAndUpdate(targetId, {
-      $pull: { friends: userId },
-    });
-
     // 2. Update any existing friend requests to BLOCKED
     await FriendModel.updateMany(
       {
@@ -75,5 +67,50 @@ export class UserService {
     );
 
     return { success: true };
+  }
+
+  static async unblockUser(userId: string, targetId: string): Promise<any> {
+    if (userId === targetId) {
+      throw new Error("You cannot unblock yourself.");
+    }
+
+    // 1. Remove the block record
+    await BlockModel.deleteOne({ blocker: userId, blocked: targetId });
+
+    // 3. Delete any friendship request records between the two users
+    await FriendModel.deleteMany({
+      $or: [
+        { sender: userId, receiver: targetId },
+        { sender: targetId, receiver: userId },
+      ],
+    });
+
+    return { success: true };
+  }
+
+  static async getBlockedUsers(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ) {
+    try {
+      // Fetch blocked users with pagination
+      const blockedUsers = await BlockModel.find({ blocker: userId })
+        .skip((page - 1) * limit) // Skip to the right page
+        .limit(Number(limit)); // Limit to the page size
+
+      // Map blocked users to get only their user IDs
+      const blockedUserIds = blockedUsers.map((block) => block.blocked);
+
+      return {
+        blockedUserIds,
+        total: blockedUsers.length, // Total count of blocked users on that page
+        page,
+        limit,
+      };
+    } catch (error) {
+      console.error("Error fetching blocked users:", error);
+      throw new Error("Failed to fetch blocked users");
+    }
   }
 }

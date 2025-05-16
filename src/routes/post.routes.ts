@@ -28,7 +28,7 @@ postRoutes.get(
 );
 
 postRoutes.get(
-  "/foryou",
+  "/posts/feed",
   authMiddleware,
   asyncAuthHandler(postController.getFeed)
 );
@@ -40,11 +40,11 @@ postRoutes.post(
   upload.array("media", 5), // Allow up to 5 media files per post
   asyncAuthHandler(postController.createPost)
 );
-postRoutes.get(
-  "/user/posts",
-  authMiddleware,
-  asyncAuthHandler(postController.getUserPosts)
-);
+// postRoutes.get(
+//   "/user/posts",
+//   authMiddleware,
+//   asyncAuthHandler(postController.getUserPosts)
+// );
 postRoutes.get(
   "/posts/:postId",
   authMiddleware,

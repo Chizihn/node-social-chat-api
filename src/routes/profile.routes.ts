@@ -21,8 +21,8 @@ profileRoutes.put(
 );
 
 // Update profile avatar
-profileRoutes.put(
-  "/profile/update-avatar",
+profileRoutes.post(
+  "/profile/upload-avatar",
   authMiddleware,
   upload.single("avatar"),
   asyncAuthHandler(ProfileController.updateAvatar)
@@ -36,8 +36,8 @@ profileRoutes.put(
 );
 
 // Update profile cover image
-profileRoutes.put(
-  "/profile/update-cover-image",
+profileRoutes.post(
+  "/profile/upload-cover",
   authMiddleware,
   upload.single("coverImage"),
   asyncAuthHandler(ProfileController.updateCoverImage)
