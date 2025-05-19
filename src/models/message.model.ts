@@ -1,27 +1,15 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { MessageStatus } from "../types/socket";
 
-export interface IAttachment {
-  name: string;
-  type: string;
-  url: string;
-}
-
 export interface IMessage extends Document {
   conversation: mongoose.Types.ObjectId;
   sender: mongoose.Types.ObjectId;
   text: string;
   status: MessageStatus;
-  attachments: IAttachment[];
+  attachments: string[];
   createdAt: Date;
   updatedAt: Date;
 }
-
-const AttachmentSchema = new Schema({
-  name: { type: String, required: true },
-  type: { type: String, required: true },
-  url: { type: String, required: true },
-});
 
 const MessageSchema = new Schema(
   {
@@ -45,7 +33,7 @@ const MessageSchema = new Schema(
       default: MessageStatus.SENT,
     },
     attachments: {
-      type: [AttachmentSchema],
+      type: [String],
       default: [],
     },
   },

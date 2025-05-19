@@ -109,7 +109,7 @@ export class SocketService {
               .emit("new_notification", notification);
 
             // Update message status to delivered
-            await MessageService.updateMessageStatus(
+            const updatedMessage = await MessageService.updateMessageStatus(
               message._id,
               MessageStatus.DELIVERED
             );
@@ -118,6 +118,21 @@ export class SocketService {
             socket.emit("message_status", {
               messageId: message._id,
               status: MessageStatus.DELIVERED,
+              timestamp: updatedMessage.updatedAt,
+            });
+
+            // Emit delivery receipt to recipient
+            this.io.to(recipientSocketId).emit("message_delivered", {
+              messageId: message._id,
+              senderId: userId,
+              timestamp: updatedMessage.updatedAt,
+            });
+          } else {
+            // If recipient is offline, keep status as sent
+            socket.emit("message_status", {
+              messageId: message._id,
+              status: MessageStatus.SENT,
+              timestamp: message.createdAt,
             });
           }
 
@@ -218,21 +233,33 @@ export class SocketService {
         }
       });
 
-      // Handle typing indicators
+      // Handle typing indicators with timestamps
       socket.on("typing", (data) => {
         const userId = this.socketUsers.get(socket.id);
         if (!userId) return;
 
         const recipientSocketId = this.userSockets.get(data.recipientId);
         if (recipientSocketId) {
+          const timestamp = new Date();
           this.io.to(recipientSocketId).emit("user_typing", {
             conversationId: data.conversationId,
             userId,
+            timestamp,
+            userName: data.userName, // Include user name for better UI feedback
           });
+
+          // Automatically clear typing indicator after timeout
+          setTimeout(() => {
+            this.io.to(recipientSocketId).emit("user_stop_typing", {
+              conversationId: data.conversationId,
+              userId,
+              timestamp: new Date(),
+            });
+          }, 5000); // Clear after 5 seconds of inactivity
         }
       });
 
-      // Handle stop typing indicators
+      // Handle stop typing indicators with timestamps
       socket.on("stop_typing", (data) => {
         const userId = this.socketUsers.get(socket.id);
         if (!userId) return;
@@ -242,8 +269,22 @@ export class SocketService {
           this.io.to(recipientSocketId).emit("user_stop_typing", {
             conversationId: data.conversationId,
             userId,
+            timestamp: new Date(),
           });
         }
+      });
+
+      // Handle user presence status
+      socket.on("set_presence", (status) => {
+        const userId = this.socketUsers.get(socket.id);
+        if (!userId) return;
+
+        // Broadcast user presence status to all connected clients
+        this.io.emit("user_presence_update", {
+          userId,
+          status,
+          timestamp: new Date(),
+        });
       });
 
       // Handle disconnection

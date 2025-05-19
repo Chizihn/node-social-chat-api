@@ -87,16 +87,7 @@ export class ProfileController {
   ) {
     try {
       const userId = req.user?.id;
-      let avatarUrl = req.body.avatarUrl;
-
-      if (req.file) {
-        const { CloudinaryService } = require("../utils/cloudinary");
-        const result = await CloudinaryService.uploadFile(
-          req.file.path,
-          "avatars"
-        );
-        avatarUrl = result.secure_url;
-      }
+      const { avatarUrl } = req.body;
 
       if (!avatarUrl) {
         return res
@@ -167,16 +158,7 @@ export class ProfileController {
   ) {
     try {
       const userId = req.user?.id;
-      let coverImageUrl = req.body.coverImageUrl;
-
-      if (req.file) {
-        const { CloudinaryService } = require("../utils/cloudinary");
-        const result = await CloudinaryService.uploadFile(
-          req.file.path,
-          "covers"
-        );
-        coverImageUrl = result.secure_url;
-      }
+      const { coverImageUrl } = req.body;
 
       if (!coverImageUrl) {
         return res

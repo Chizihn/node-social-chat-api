@@ -3,10 +3,7 @@ import z from "zod";
 export class PostValidation {
   // Schema for creating a new post
   static CreatePostSchema = z.object({
-    content: z
-      .string()
-      .min(1, "Post content is required")
-      .max(2000, "Post content cannot exceed 2000 characters"),
+    content: z.string().optional(),
     tags: z.array(z.string()).optional(),
     media: z
       .array(z.string().url("Each media item must be a valid URL"))

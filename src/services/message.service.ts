@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { ConversationModel } from "../models/conversation.model";
 import { MessageModel } from "../models/message.model";
 import { MessageStatus } from "../types/socket";
+import MediaModel, { TargetType } from "../models/media.model";
 
 export class MessageService {
   // Create or get a conversation between two users
@@ -44,13 +45,14 @@ export class MessageService {
     senderId: string,
     recipientId: string,
     text: string,
-    attachments: any[] = []
+    attachments: string[] = [] // Assume array of URLs
   ): Promise<any> {
     const conversation = await this.getOrCreateConversation(
       senderId,
       recipientId
     );
 
+    // Create the message first
     const message = await MessageModel.create({
       conversation: conversation._id,
       sender: senderId,
@@ -58,6 +60,25 @@ export class MessageService {
       attachments,
       status: MessageStatus.SENT,
     });
+
+    // Handle media attachments if any
+    if (attachments && attachments.length > 0) {
+      const mediaTypes = attachments.map((url: string) =>
+        url.endsWith(".mp4") ? "video" : "image"
+      );
+
+      const mediaDocs = attachments.map((url: string, index: number) => ({
+        user: senderId,
+        post: null,
+        message: message._id,
+        url,
+        type: mediaTypes[index],
+        targetType: "message" as TargetType,
+        targetId: message._id,
+      }));
+
+      await MediaModel.insertMany(mediaDocs);
+    }
 
     // Update the conversation's last message
     await ConversationModel.findByIdAndUpdate(conversation._id, {

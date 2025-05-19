@@ -2,7 +2,6 @@ import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { asyncAuthHandler } from "../middlewares/async.middleware";
 import { ProfileController } from "../controllers/profile.controller";
-import upload from "../utils/multer";
 
 const profileRoutes = Router();
 
@@ -24,7 +23,6 @@ profileRoutes.put(
 profileRoutes.post(
   "/profile/upload-avatar",
   authMiddleware,
-  upload.single("avatar"),
   asyncAuthHandler(ProfileController.updateAvatar)
 );
 
@@ -39,7 +37,6 @@ profileRoutes.put(
 profileRoutes.post(
   "/profile/upload-cover",
   authMiddleware,
-  upload.single("coverImage"),
   asyncAuthHandler(ProfileController.updateCoverImage)
 );
 

@@ -11,11 +11,7 @@ class PostController {
   ) {
     try {
       const userId = req.user?._id;
-      const post = await PostService.createPost(
-        userId,
-        req.body,
-        req.files as Express.Multer.File[]
-      );
+      const post = await PostService.createPost(userId, req.body);
 
       return res.status(HTTPSTATUS.CREATED).json({
         success: true,

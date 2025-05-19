@@ -10,56 +10,48 @@ import { FriendshipStatus } from "../enums/user.enum";
 import { NotificationService } from "./notification.service";
 import { NotificationType } from "../models/notification.model";
 import { PostValidation } from "../validators/post.validator";
+import { z } from "zod";
 
 export class PostService {
   static async createPost(
     userId: string,
-    postData: any,
-    files?: Express.Multer.File[]
+    validatedData: z.infer<typeof PostValidation.CreatePostSchema>
   ) {
-    const validatedData = PostValidation.validateCreatePost(postData);
-    if (!validatedData.success) {
-      throw new Error(validatedData.error.format.name);
-    }
+    try {
+      const { content, tags, media, location } = validatedData;
 
-    let { content, tags, media, location } = validatedData.data;
-
-    // Handle file uploads if present
-    if (files && Array.isArray(files)) {
-      const { CloudinaryService } = require("../utils/cloudinary");
-      const uploadPromises = files.map((file) =>
-        CloudinaryService.uploadFile(file.path, "posts")
-      );
-      const uploadResults = await Promise.all(uploadPromises);
-      const mediaUrls = uploadResults.map((result) => result.secure_url);
-      media = [...(media || []), ...mediaUrls];
-    }
-
-    const post = new PostModel({
-      content,
-      user: userId,
-      tags: tags || [],
-      media: media || [],
-      location: location || "",
-    });
-
-    if (media && media.length > 0) {
-      const mediaTypes = media.map((mediaUrl) =>
-        mediaUrl.endsWith(".mp4") ? "video" : "image"
-      );
-
-      const mediaDocs = media.map((item) => ({
+      const post = new PostModel({
+        content,
         user: userId,
-        post: post._id,
-        url: media,
-        type: mediaTypes,
-      }));
+        tags: tags || [],
+        media: media || [],
+        location: location || "",
+      });
 
-      await MediaModel.insertMany(mediaDocs);
+      // Save the post first to get its ID
+      await post.save();
+
+      if (media && media.length > 0) {
+        const mediaTypes = media.map((mediaUrl: string) =>
+          mediaUrl.endsWith(".mp4") ? "video" : "image"
+        );
+
+        const mediaDocs = media.map((url: string, index: number) => ({
+          user: userId,
+          post: post._id,
+          url: url,
+          type: mediaTypes[index],
+          targetType: "post",
+          targetId: post._id, // Add the required targetId field
+        }));
+
+        await MediaModel.insertMany(mediaDocs);
+      }
+
+      return post;
+    } catch (error) {
+      throw error;
     }
-
-    await post.save();
-    return post;
   }
 
   static async getPosts(page: number = 1, limit: number = 10) {

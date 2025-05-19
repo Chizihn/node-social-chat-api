@@ -58,7 +58,7 @@ class FollowController {
 
       res.status(HTTPSTATUS.OK).json({
         count: followers.length,
-        followers: followers.map((f) => f.follower),
+        followers: followers.map((f: { follower: any }) => f.follower),
       });
     } catch (error) {
       next(error);
@@ -77,7 +77,7 @@ class FollowController {
 
       res.status(HTTPSTATUS.OK).json({
         count: following.length,
-        following: following.map((f) => f.following),
+        following: following.map((f: { following: any }) => f.following),
       });
     } catch (error) {
       next(error);

@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema, Types, Model } from "mongoose";
 
 // Define the types of targets a media file can belong to
-type TargetType = "post" | "comment";
+export type TargetType = "post" | "comment" | "message";
 
 // Define the TS interface for a media document
 export interface MediaDocument extends Document {

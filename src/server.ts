@@ -49,10 +49,10 @@ app.get("/", (req, res) => {
 });
 
 // Apply rate limiting to auth routes
-app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/auth", authRoutes);
 
 // Apply general rate limiting to all other API routes
-app.use("/api/", apiLimiter, profileRoutes);
+app.use("/api/", profileRoutes);
 app.use("/api/", userRoutes);
 app.use("/api/", friendRoutes);
 app.use("/api/", apiLimiter, followRoutes);

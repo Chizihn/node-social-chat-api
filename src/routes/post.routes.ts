@@ -3,8 +3,6 @@ import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import postController from "../controllers/post.controller";
 import { asyncAuthHandler } from "../middlewares/async.middleware";
-import upload from "../utils/multer";
-
 const postRoutes = Router();
 
 // Public routes (though still using authMiddleware — maybe rename?)
@@ -13,13 +11,6 @@ postRoutes.get(
   authMiddleware,
   asyncAuthHandler(postController.getPosts)
 );
-
-// router.post(
-//   '/',
-//   authMiddleware,
-//   upload.array('media', 5), // Limit to 5 media files per post
-//   postController.createPost
-// );
 
 postRoutes.get(
   "/posts/user/:username",
@@ -37,7 +28,6 @@ postRoutes.get(
 postRoutes.post(
   "/posts",
   authMiddleware,
-  upload.array("media", 5), // Allow up to 5 media files per post
   asyncAuthHandler(postController.createPost)
 );
 // postRoutes.get(
